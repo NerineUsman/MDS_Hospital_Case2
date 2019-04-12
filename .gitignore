@@ -1,0 +1,4 @@
+# Add here files to be gitignored
+Development/*
+Integodata/*
+.pycache*
