@@ -2,3 +2,4 @@
 Development/*
 Integodata/*
 .pycache*
+.ipynb_checkpoints/*

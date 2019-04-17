@@ -157,18 +157,28 @@ def get_feature_value(var,feat):
             else:
                 print('ERROR: PatientSex has unrecognized value.')
         else:
-            print('Not implemented')
+            print('Not implemented (string feature).')
+
+    # Sequence features:
+    if var.data_element(feat).VR=='SQ':
+        seq = var.data_element(feat)[0]
+
+        if (feat=='ProcedureCodeSequence') or (feat=='RequestedProcedureCodeSequence'):
+            if seq.data_element('CodeValue').value=='C5-05':
+                return [0]
+            if seq.data_element('CodeValue').value=='C5-01':
+                return [1]
+            else:
+                print('ERROR: CodeValue subfeature has unrecognized value.')
+        else:
+            print('Not implemented (sequence feature).')
 
     # Special features:
     if var.data_element(feat).VR=='OW':
         print('Not implemented')
-    if var.data_element(feat).VR=='SQ':
-        print('Not implemented')
-        #seq = []
-        #for val_ in val:
-        #    seq = seq+[get_feature_value(val_,)]
+
     if var.data_element(feat).VR=='UI':
-        print('Not implemented')
+        print('Not implemented (UID feature).')
 
 
 
