@@ -1,5 +1,6 @@
 # Add here files to be gitignored
 Development/*
 Integodata/*
+Thorax_Abdomen/*
 .pycache*
 .ipynb_checkpoints/*
