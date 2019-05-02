@@ -364,3 +364,20 @@ def low_rank_C(u,s,v,k):
     vk = v[:k,:]
     # Ck = np.matmul(np.matmul(uk,np.diag(sk)),vk)
     return uk, sk, vk
+
+def sizeSlice(s):
+    ## determines the volume of a slice in dm^3
+    threshold_mask = s.pixel_array > 800
+    tmpmask = ndimage.binary_erosion(threshold_mask,iterations =6)
+    closedmask = ndimage.binary_fill_holes(tmpmask)
+    n_pixels = np.sum(closedmask)      ## # pixels above threshold
+    v_pixel = s.PixelSpacing[0]*s.PixelSpacing[1]*s.SliceThickness *10**(-6) # volume 1 pixel in leters
+    return n_pixels*v_pixel
+
+def sizePatient(patient):
+    ## gives volume of scanned body in dm^3
+    volume = 0
+    for s in patient:
+        volume += sizeSlice(s)
+    return volume
+
