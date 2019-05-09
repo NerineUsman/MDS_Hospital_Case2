@@ -260,6 +260,7 @@ for ii in range(0,n_fc+1):
     wide = wide/2
     height = height/2
     im = ax.imshow(weights[ii],cmap='bwr')
+    plt.axis('off')
     #plt.tight_layout()
 #ax = fig.add_subplot(1, n_fc+1, n_fc+1)
 #im = ax.imshow(w_out,cmap='bwr')
