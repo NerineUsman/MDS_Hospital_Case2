@@ -170,7 +170,7 @@ train_step = tf.train.AdamOptimizer(eta).minimize(loss)
 #############################################
 # EVALUATE AVERAGE PREDICTION ERROR PER BATCH
 #############################################
-pred_error = tf.reduce_mean(tf.divide(tf.abs(y-y_),y))*100
+pred_error = tf.reduce_mean(tf.abs(y-y_))
 
 #############################################
 # RUN MODEL
@@ -189,10 +189,10 @@ with tf.Session() as sess:
           print("Old model in use.")
 
   else:
-      file = open("logs_loss/loss_%s_%s_%s_%s_%s.out" % (eta,n_fc,version,vali,max_steps),"a")
+      file = open("logs_loss/logs_%s_%s_%s_%s_%s.out" % (eta,n_fc,version,vali,max_steps),"a")
       file.write("INPUTS: eta train_batch_size vali_batch_size seed")
       file.write("\nINPUTS: %f %d %d %d" %(eta,train_batch_size,vali_batch_size,seed))
-      file.write("\nstep loss_train acc_train loss_vali acc_vali")
+      file.write("\nstep loss_train abserror_train loss_vali abserror_vali")
       file.close()
 
       print("Initializing training...")
@@ -211,9 +211,9 @@ with tf.Session() as sess:
             loss_train = sess.run(loss,feed_dict={x: x_batch, y: y_batch, keep_prob: 1})
             loss_vali = sess.run(loss,feed_dict={x: x_batch_vali, y: y_batch_vali, keep_prob: 1})
             print('*** STEP %d ***' % step)
-            print('Training - loss = %f, pred_error = %.2f %%' % (loss_train,pred_error_train))
-            print('Validation - loss = %f, pred_error = %.2f %%' % (loss_vali,pred_error_vali))
-            file = open("logs_loss/loss_%s_%s_%s_%s_%s.out" % (eta,n_fc,version,vali,max_steps),"a")
+            print('Training - loss = %f, abserror = %.2f' % (loss_train,pred_error_train))
+            print('Validation - loss = %f, abserror = %.2f' % (loss_vali,pred_error_vali))
+            file = open("logs_loss/logs_%s_%s_%s_%s_%s.out" % (eta,n_fc,version,vali,max_steps),"a")
             file.write("\n%d %f %.2f %f %.2f" %(step,loss_train,pred_error_train,loss_vali,pred_error_vali))
             print("Losses successfully recorded!")
 
@@ -236,6 +236,57 @@ with tf.Session() as sess:
           weights.append(ww)
   w_out = sess.run(W_out)
   bias_out = sess.run(b_out)
+
+#############################################
+# LOSS AND PREDICTION ERROR
+#############################################
+crs = open("logs_loss/logs_%s_%s_%s_%s_%s.out" % (eta,n_fc,version,vali,max_steps), "r")
+
+step = []
+loss_train = []
+loss_validation = []
+train_acc = []
+validation_acc = []
+
+k = 0
+for line in crs:
+    if k>2:
+        step.append(line.split()[0])
+        loss_train.append(line.split()[1])
+        loss_validation.append(line.split()[3])
+        train_acc.append(line.split()[2])
+        validation_acc.append(line.split()[4])
+    k = k+1
+
+crs.close()
+
+# Minimum value of loss_validation:
+min_loss = min(loss_validation)
+min_index = loss_validation.index(min(loss_validation))
+min_step = step[min_index]
+print('*** Minimum loss: %.3f; reached at step %d ***'%(float(min_loss),int(min_step)))
+
+# Plots
+plt.figure(1)
+plt.plot(step,loss_train,label="Training")
+plt.plot(step,loss_validation,label="Validation")
+plt.ylabel('Loss')
+plt.xlabel('Step')
+plt.legend(loc=1)
+#plt.xscale('log')
+plt.yscale('log')
+plt.grid(True,which='minor')
+plt.show()
+
+plt.figure(2)
+plt.plot(step,train_acc,label="Training")
+plt.plot(step,validation_acc,label="Validation")
+plt.ylabel('Average prediction (absolute) error per batch')
+plt.xlabel('Step')
+plt.legend(loc=1)
+plt.grid(True)
+plt.show()
+
 
 ########################################
 # ANALYZE WEIGHTS
@@ -260,7 +311,12 @@ for ii in range(0,n_fc+1):
     wide = wide/2
     height = height/2
     im = ax.imshow(weights[ii],cmap='bwr')
-    plt.axis('off')
+    if ii==0:
+        print(feats)
+        ax.set_yticks(np.arange(len(feats)))
+        ax.set_yticklabels(feats,fontsize=8)
+    else:
+        plt.axis('off')
     #plt.tight_layout()
 #ax = fig.add_subplot(1, n_fc+1, n_fc+1)
 #im = ax.imshow(w_out,cmap='bwr')
@@ -310,11 +366,36 @@ plt.title('Some test examples')
 plt.xlabel('Test sample')
 plt.ylabel('Normalized dose')
 plt.legend()
+plt.show()
 
-plt.figure()
-test_pred_error = np.divide(np.abs(preds_test-labels_test),labels_test)
-plt.scatter(range(0,len(labels_test)),test_pred_error*100,marker='^')
-plt.xlabel('Test sample')
-plt.ylabel('Relative error in dose prediction (%)')
-plt.ylim([0,100])
+# plt.figure()
+# test_pred_relerror = np.divide(np.abs(preds_test-labels_test),labels_test)
+# plt.scatter(range(0,len(labels_test)),test_pred_relerror*100,marker='^')
+# plt.xlabel('Test sample')
+# plt.ylabel('Relative error in dose prediction (%)')
+# plt.ylim([0,100])
+# plt.show()
+
+#fig, (ax1,ax2) = plt.subplots(1, 2, sharex='col', sharey='row')
+fig = plt.figure(figsize=(6, 6))
+grid = plt.GridSpec(4, 4, hspace=0.2, wspace=0.2)
+ax1 = fig.add_subplot(grid[:, :3])
+ax2 = fig.add_subplot(grid[:, 3])
+
+test_pred_abserror = np.abs(preds_test-labels_test)
+ax1.scatter(range(0,len(labels_test)),test_pred_abserror,marker='^')
+ax1.set_xlabel('Test sample')
+ax1.set_ylabel('Absolute error in dose prediction')
+#plt.ylim([0,1])
+ax1.set_ylim([1e-6,1])
+ax1.set_yscale('log')
+#plt.show()
+
+test_pred_abserror = np.abs(preds_test-labels_test)
+ax2.boxplot(test_pred_abserror)
+#plt.ylim([0,1])
+ax2.set_ylim([1e-6,1])
+ax2.set_yscale('log')
+ax2.set_xticks([])
+ax2.set_yticks([])
 plt.show()
