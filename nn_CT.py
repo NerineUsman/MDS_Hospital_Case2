@@ -32,7 +32,7 @@ parser.add_argument('--n_fc', type=int, default='2',
                     # The final output layer is not considered in n_fc
 
 # Logs:
-parser.add_argument('--log_freq', type=int, default='50',
+parser.add_argument('--log_freq', type=int, default='100',
                     help='Log frequency.')
 
 FLAGS = parser.parse_args()
@@ -57,7 +57,7 @@ tf.set_random_seed(seed)
 #############################################
 # READ DATA
 #############################################
-with open('data/YXnorm_NO_IMG.pickle','rb') as f:  # Python 3: open(..., 'rb')
+with open('data/YXnorm_adv_NO_IMG.pickle','rb') as f:  # Python 3: open(..., 'rb')
     Y,X,Yshift,Xshift,Yscale,Xscale = pickle.load(f)
 
 features = np.array(X)
@@ -83,6 +83,7 @@ labels_test = labels[n_vali:(n_vali+n_test)]
 labels = labels[(n_vali+n_test):]
 
 p = features.shape[1]
+print(p)
 
 #############################################
 # PREVIOUS DEFINITIONS
@@ -217,7 +218,7 @@ with tf.Session() as sess:
             file.write("\n%d %f %.2f %f %.2f" %(step,loss_train,pred_error_train,loss_vali,pred_error_vali))
             print("Losses successfully recorded!")
 
-            print("%ss / %ssteps" % (time.time()-time0,log_frequency))
+            print("%.2f s / %s steps" % (time.time()-time0,log_frequency))
             time0 = time.time()
 
         train_step.run(feed_dict={x: x_batch_vali, y: y_batch_vali, keep_prob: 0.5})
@@ -291,7 +292,7 @@ plt.show()
 ########################################
 # ANALYZE WEIGHTS
 ########################################
-with open('data/labels_NO_IMG.pickle','rb') as f:  # Python 3: open(..., 'rb')
+with open('data/labels_adv_NO_IMG.pickle','rb') as f:  # Python 3: open(..., 'rb')
     feats = pickle.load(f)
 
 weights.append(w_out)
