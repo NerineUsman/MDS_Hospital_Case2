@@ -2,6 +2,8 @@
 import os
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy import ndimage
+
 
 from os.path import dirname, join
 from pprint import pprint
@@ -96,6 +98,12 @@ def get_feature_value(var,feat):
        feat: feature whose value we want to retrieve
        ---Outputs---
        Returns (multi- or uni-dimensional) feature as a list.'''
+    if feat == 'Size':
+        return [sizeSlice(var)]
+
+    if feat == 'Size_hollow':
+        return [sizeSlice_hollow(var)]
+
     val = var.data_element(feat).value
 
     # Numerical features:
@@ -249,6 +257,7 @@ def get_feature_value_numerSection(var,feat):
        feat: feature whose value we want to retrieve
        ---Outputs---
        Returns (multi- or uni-dimensional) feature as a list.'''
+
     val = var.data_element(feat).value
 
     # Numerical features:
@@ -345,6 +354,8 @@ def get_feature_value_numerSection(var,feat):
     if var.data_element(feat).VR=='UI':
         print('UID feature ignored.')
 
+
+
 def low_rank_C(u,s,v,k):
     '''Reduces the rank of a matrix C which is decomposed using SVD as
        C = u*np.diag(s)*v, i.e. u, s, v = np.linalg.svd(C).
@@ -373,6 +384,17 @@ def sizeSlice(s):
     n_pixels = np.sum(closedmask)      ## # pixels above threshold
     v_pixel = s.PixelSpacing[0]*s.PixelSpacing[1]*s.SliceThickness *10**(-6) # volume 1 pixel in leters
     return n_pixels*v_pixel
+
+def sizeSlice_hollow(s):
+    ## determines the volume of a slice in dm^3
+    threshold_mask = s.pixel_array > 800
+    tmpmask = ndimage.binary_erosion(threshold_mask,iterations =6)
+    n_pixels = np.sum(tmpmask)      ## # pixels above threshold
+    v_pixel = s.PixelSpacing[0]*s.PixelSpacing[1]*s.SliceThickness *10**(-6) # volume 1 pixel in leters
+    return n_pixels*v_pixel
+
+
+
 
 def sizePatient(patient):
     ## gives volume of scanned body in dm^3
