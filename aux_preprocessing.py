@@ -104,6 +104,10 @@ def get_feature_value(var,feat):
     if feat == 'Size_hollow':
         return [sizeSlice_hollow(var)]
 
+    if feat == 'Im_mean':
+        picture = var.pixel_array
+        return [picture.mean()]
+
     val = var.data_element(feat).value
 
     # Numerical features:
