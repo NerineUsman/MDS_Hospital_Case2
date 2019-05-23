@@ -3,6 +3,8 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import ndimage
+from skimage import measure
+
 
 
 from os.path import dirname, join
@@ -397,7 +399,19 @@ def sizeSlice_hollow(s):
     v_pixel = s.PixelSpacing[0]*s.PixelSpacing[1]*s.SliceThickness *10**(-6) # volume 1 pixel in leters
     return n_pixels*v_pixel
 
-
+def imageFeatures(s):
+    tmparr = s.pixel_array
+    threshold_mask = tmparr > 800
+    tmpmask = ndimage.binary_erosion(threshold_mask,iterations =6)
+    closedmask = ndimage.binary_fill_holes(tmpmask)
+    n_pixels = np.sum(tmpmask)
+    nf_pixels = np.sum(closedmask)      ## # pixels above threshold
+    v_pixel = s.PixelSpacing[0]*s.PixelSpacing[1]*s.SliceThickness *10**(-6) # volume 1 pixel in leters
+    size = nf_pixels * v_pixel
+    size_hollow = n_pixels*v_pixel
+    perimeter = measure.perimeter(closedmask) * s.PixelSpacing[0]
+    meanhu = np.mean(tmparr[closedmask])
+    return [size, size_hollow, perimeter, meanhu]
 
 
 def sizePatient(patient):
